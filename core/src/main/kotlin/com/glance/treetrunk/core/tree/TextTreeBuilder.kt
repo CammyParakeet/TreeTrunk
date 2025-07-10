@@ -1,4 +1,4 @@
-package com.glance.treetrunk.core
+package com.glance.treetrunk.core.tree
 
 import java.io.File
 
@@ -7,7 +7,7 @@ data class TreeNode(
     val children: List<TreeNode> = emptyList()
 )
 
-object TreeBuilder {
+object TextTreeBuilder {
 
     fun buildTree(root: File): TreeNode {
         val children = root.listFiles()
@@ -18,16 +18,21 @@ object TreeBuilder {
         return TreeNode(root, children)
     }
 
-    fun renderTree(node: TreeNode, prefix: String = "", isLast: Boolean = true): String {
+    fun renderTree(
+        node: TreeNode,
+        prefix: String = "",
+        isLast: Boolean = true,
+        symbols: CliTreeSymbols = UnicodeSymbols
+    ): String {
         val name = node.file.name + if (node.file.isDirectory) "/" else ""
         val builder = StringBuilder()
         builder.append(prefix)
-        builder.append(if (isLast) TreeSymbols.LAST_BRANCH else TreeSymbols.BRANCH)
+        builder.append(if (isLast) symbols.lastBranch else symbols.branch)
         builder.append(name).append("\n")
 
-        val newPrefix = prefix + if (isLast) TreeSymbols.INDENT else TreeSymbols.VERTICAL
+        val newPrefix = prefix + if (isLast) symbols.indent else symbols.vertical
         node.children.forEachIndexed { i, childNode ->
-            builder.append(renderTree(childNode, newPrefix, i == node.children.lastIndex))
+            builder.append(renderTree(childNode, newPrefix, i == node.children.lastIndex, symbols))
         }
 
         return builder.toString()
