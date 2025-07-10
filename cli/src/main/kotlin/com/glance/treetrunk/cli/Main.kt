@@ -21,6 +21,12 @@ class Main : Callable<Int> {
     lateinit var root: File
 
     @Option(
+        names = ["--output", "--o"],
+        description = ["Optional output file to write the tree to"]
+    )
+    var outputFile: File? = null
+
+    @Option(
         names = ["--style"],
         description = ["Tree rendering style: \${COMPLETION-CANDIDATES}"],
         defaultValue = "UNICODE"
@@ -34,8 +40,18 @@ class Main : Callable<Int> {
         }
 
         val tree = TextTreeBuilder.buildTree(root)
-        println(root.name + "/")
-        println(TextTreeBuilder.renderTree(tree, symbols = style.symbols))
+        val output = buildString {
+            appendLine(root.name + "/")
+            append(TextTreeBuilder.renderTree(tree, symbols = style.symbols))
+        }
+
+        println(output)
+
+        outputFile?.let { file ->
+            file.writeText(output)
+            println("Tree exported to ${file.absolutePath}")
+        }
+
         return 0
     }
 }
