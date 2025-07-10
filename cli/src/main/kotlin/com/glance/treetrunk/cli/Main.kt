@@ -17,15 +17,24 @@ import java.util.concurrent.Callable
 )
 class Main : Callable<Int> {
 
+    /**
+     * The root directory to scan for building the tree
+     */
     @Parameters(index = "0", description = ["Root directory to scan"])
     lateinit var root: File
 
+    /**
+     * Optional output file to export the rendered tree
+     */
     @Option(
         names = ["--output", "--o"],
         description = ["Optional output file to write the tree to"]
     )
     var outputFile: File? = null
 
+    /**
+     * Output rendering style
+     */
     @Option(
         names = ["--style"],
         description = ["Tree rendering style: \${COMPLETION-CANDIDATES}"],
@@ -56,6 +65,9 @@ class Main : Callable<Int> {
     }
 }
 
+/**
+ * CLI entrypoint for TreeTrunk
+ */
 fun main(args: Array<String>) {
     CommandLine(Main()).execute(*args)
 }
