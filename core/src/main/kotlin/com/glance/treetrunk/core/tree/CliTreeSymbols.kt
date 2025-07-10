@@ -14,13 +14,28 @@ interface CliTreeSymbols {
 }
 
 /**
+ * Register the built-in supported tree text styles
+ */
+fun registerBuiltInStyles() {
+    StyleRegistry.register(Style.UNICODE.toString(), UnicodeSymbols)
+    StyleRegistry.register(Style.ASCII.toString(), AsciiSymbols)
+    //StyleRegistry.register(Style.MARKDOWN.toString(), )
+    //StyleRegistry.register(Style.EMOJI.toString(), )
+}
+
+/**
  * CLI rendering styles. Determines which symbol set to use
  */
-enum class Style(val symbols: CliTreeSymbols) {
-    UNICODE(UnicodeSymbols),
-    ASCII(AsciiSymbols)
+enum class Style(private val styleName: String) {
+    UNICODE("UNICODE"),
+    ASCII("ASCII"),
+    MARKDOWN("MARKDOWN"),
+    EMOJI("EMOJI");
 
-    // TODO: Dynamic registry?
+    val symbols: CliTreeSymbols
+        get() = StyleRegistry.get(styleName) ?: error("Style '$styleName' not recognized")
+
+    override fun toString(): String = styleName
 }
 
 /**

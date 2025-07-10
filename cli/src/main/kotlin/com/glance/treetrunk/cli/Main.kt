@@ -1,7 +1,9 @@
 package com.glance.treetrunk.cli
 
 import com.glance.treetrunk.core.tree.Style
+import com.glance.treetrunk.core.tree.StyleRegistry
 import com.glance.treetrunk.core.tree.TextTreeBuilder
+import com.glance.treetrunk.core.tree.registerBuiltInStyles
 import picocli.CommandLine
 import picocli.CommandLine.Command
 import picocli.CommandLine.Option
@@ -42,6 +44,15 @@ class Main : Callable<Int> {
     )
     var style: Style = Style.UNICODE
 
+    /**
+     * Override --style with a custom registered style
+     */
+    @Option(
+        names = ["--custom-style"],
+        description = ["Name of a dynamically registered style (overrides --style if provided)"]
+    )
+    var customStyle: String? = null
+
     override fun call(): Int {
         if (!root.exists() || !root.isDirectory) {
             System.err.println("Invalid directory: ${root.absolutePath}")
@@ -49,9 +60,17 @@ class Main : Callable<Int> {
         }
 
         val tree = TextTreeBuilder.buildTree(root)
+
+        val symbols = customStyle?.let {
+            StyleRegistry.get(it) ?: run {
+                System.err.println("Custom style '$it' is not recognized")
+                return 1
+            }
+        } ?: style.symbols
+
         val output = buildString {
             appendLine(root.name + "/")
-            append(TextTreeBuilder.renderTree(tree, symbols = style.symbols))
+            append(TextTreeBuilder.renderTree(tree, symbols = symbols))
         }
 
         println(output)
@@ -69,5 +88,6 @@ class Main : Callable<Int> {
  * CLI entrypoint for TreeTrunk
  */
 fun main(args: Array<String>) {
+    registerBuiltInStyles()
     CommandLine(Main()).execute(*args)
 }
