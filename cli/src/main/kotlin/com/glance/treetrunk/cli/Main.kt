@@ -22,8 +22,12 @@ class Main : Callable<Int> {
     /**
      * The root directory to scan for building the tree
      */
-    @Parameters(index = "0", description = ["Root directory to scan"])
-    lateinit var root: File
+    @Parameters(
+        index = "0",
+        description = ["Root directory to scan"],
+        arity = "0..1"
+    )
+    var root: File? = null
 
     /**
      * Optional output file to export the rendered tree
@@ -53,13 +57,29 @@ class Main : Callable<Int> {
     )
     var customStyle: String? = null
 
+    @Option(
+        names = ["--list-styles"],
+        description = ["Lists all available built-in and custom styles, then exits"]
+    )
+    var listStyles: Boolean = false
+
     override fun call(): Int {
-        if (!root.exists() || !root.isDirectory) {
-            System.err.println("Invalid directory: ${root.absolutePath}")
+        if (listStyles) {
+            listStyles()
+            return 0
+        }
+
+        val rootDir = root ?: kotlin.run {
+            System.err.println("Missing required parameter: <root>")
             return 1
         }
 
-        val tree = TextTreeBuilder.buildTree(root)
+        if (!rootDir.exists() || !rootDir.isDirectory) {
+            System.err.println("Invalid directory: ${rootDir.absolutePath}")
+            return 1
+        }
+
+        val tree = TextTreeBuilder.buildTree(rootDir)
 
         val symbols = customStyle?.let {
             StyleRegistry.get(it) ?: run {
@@ -69,7 +89,7 @@ class Main : Callable<Int> {
         } ?: style.symbols
 
         val output = buildString {
-            appendLine(root.name + "/")
+            appendLine(rootDir.name + "/")
             append(TextTreeBuilder.renderTree(tree, symbols = symbols))
         }
 
@@ -82,6 +102,26 @@ class Main : Callable<Int> {
 
         return 0
     }
+
+    private fun listStyles() {
+        println("Available Tree Styles\n")
+
+        println("Built-in styles (use with --style):")
+        for (style in Style.entries) {
+            println(" - ${style.name}")
+        }
+
+        val custom = StyleRegistry.all().keys - Style.entries.map { it.name }.toSet()
+        if (custom.isNotEmpty()) {
+            println("\nCustom styles (use with --custom-style):")
+            for (name in custom) {
+                println(" - $name")
+            }
+        } else {
+            println("\nNo custom styles registered")
+        }
+    }
+
 }
 
 /**
