@@ -53,13 +53,31 @@ class RenderCommand : Callable<Int> {
     )
     var customStyle: String? = null
 
+    @Option(
+        names = ["--max-depth", "--depth"],
+        description = ["Maximum directory depth to render (default: 8)"],
+        defaultValue = "8"
+    )
+    var maxDepth: Int = 8
+
+    @Option(
+        names = ["--max-children"],
+        description = ["Maximum number of children per folder before collapsing (0 = no limit)"],
+        defaultValue = "25"
+    )
+    var maxChildren: Int = 25
+
     override fun call(): Int {
         if (!root.exists() || !root.isDirectory) {
             System.err.println("Invalid directory: ${root.absolutePath}")
             return 1
         }
 
-        val tree = TextTreeBuilder.buildTree(root)
+        val tree = TextTreeBuilder.buildTree(
+            root,
+            maxDepth = maxDepth,
+            maxChildren = maxChildren
+        )
 
         val symbols = customStyle?.let {
             StyleRegistry.get(it) ?: run {

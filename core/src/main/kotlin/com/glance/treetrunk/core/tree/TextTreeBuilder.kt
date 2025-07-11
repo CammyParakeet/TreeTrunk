@@ -13,12 +13,48 @@ object TextTreeBuilder {
      * @param root The root directory to scan
      * @return A TreeNode representing the root and all its children
      *
-     * TODO: Add support for preset & manual ignore lists, max depth, hidden files, symlink handling, and more
+     * TODO: Add support for preset & manual ignore lists, hidden files, symlink handling, and more
+     * TODO: defaults from installed properties or cfg? Would need cli update too
      */
-    fun buildTree(root: File): TreeNode {
+    fun buildTree(
+        root: File,
+        currentDepth: Int = 0,
+        maxDepth: Int = 8,
+        maxChildren: Int = 25
+    ): TreeNode {
+        // todo sorting
+        val files = root.listFiles() ?: emptyArray()
+        val (dirs, regularFiles) = files.partition { it.isDirectory }
+
+        if (maxChildren > 0 && files.size > maxChildren) {
+            val visible = files.take(maxChildren)
+            val hidden = files.drop(maxChildren)
+
+            val visibleChildren = visible.map {
+                buildTree(it, currentDepth + 1, maxDepth, maxChildren)
+            }
+
+            val summaryNode = TreeNode(
+                File("... (${hidden.size} more entries: ${dirs.size} folders, ${regularFiles.size} files)")
+            )
+
+            return TreeNode(root, visibleChildren + summaryNode)
+        }
+
+        if (currentDepth >= maxDepth) {
+            if (files.isEmpty()) {
+                return TreeNode(root)
+            }
+
+            val summary = "... (${dirs.size} folders, ${regularFiles.size} files more)"
+            return TreeNode(root, children = listOf(
+                TreeNode(File(summary))
+            ))
+        }
+
         val children = root.listFiles()
             ?.sortedWith(compareBy({ !it.isDirectory }, { it.name }))
-            ?.map { buildTree(it) }
+            ?.map { buildTree(it, currentDepth + 1, maxDepth) }
             ?: emptyList()
 
         return TreeNode(root, children)
@@ -41,7 +77,12 @@ object TextTreeBuilder {
         isLast: Boolean = true,
         symbols: CliTreeSymbols = UnicodeSymbols
     ): String {
-        val name = node.file.name + if (node.file.isDirectory) "/" else ""
+        val name = when {
+            node.file.name.startsWith("...") -> node.file.name // todo anything custom
+            node.file.isDirectory -> node.file.name + "/"
+            else -> node.file.name
+        }
+
         val builder = StringBuilder()
         builder.append(prefix)
         builder.append(if (isLast) symbols.lastBranch else symbols.branch)
