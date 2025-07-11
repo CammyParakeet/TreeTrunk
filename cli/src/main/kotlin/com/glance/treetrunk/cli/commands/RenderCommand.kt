@@ -20,9 +20,10 @@ class RenderCommand : Callable<Int> {
 
     @Parameters(
         index = "0",
-        description = ["Root directory to scan"]
+        description = ["Root directory to scan"],
+        arity = "0..1"
     )
-    lateinit var root: File
+    var root: File = File(".")
 
     /**
      * Optional output file to export the rendered tree
