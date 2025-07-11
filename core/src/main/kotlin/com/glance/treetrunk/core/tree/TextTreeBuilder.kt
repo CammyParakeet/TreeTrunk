@@ -1,5 +1,7 @@
 package com.glance.treetrunk.core.tree
 
+import com.glance.treetrunk.core.tree.model.RenderOptions
+import com.glance.treetrunk.core.tree.model.TreeNode
 import java.io.File
 
 /**
@@ -17,48 +19,73 @@ object TextTreeBuilder {
      * TODO: defaults from installed properties or cfg? Would need cli update too
      */
     fun buildTree(
-        root: File,
+        options: RenderOptions,
+        root: File = options.root,
         currentDepth: Int = 0,
-        maxDepth: Int = 8,
-        maxChildren: Int = 25
     ): TreeNode {
-        // todo sorting
-        val files = root.listFiles() ?: emptyArray()
-        val (dirs, regularFiles) = files.partition { it.isDirectory }
+        val files = root.listFiles()?.sortedWith(compareBy({ !it.isDirectory }, { it.name })) ?: emptyList()
 
-        if (maxChildren > 0 && files.size > maxChildren) {
-            val visible = files.take(maxChildren)
-            val hidden = files.drop(maxChildren)
-
-            val visibleChildren = visible.map {
-                buildTree(it, currentDepth + 1, maxDepth, maxChildren)
-            }
-
-            val summaryNode = TreeNode(
-                File("... (${hidden.size} more entries: ${dirs.size} folders, ${regularFiles.size} files)")
-            )
-
-            return TreeNode(root, visibleChildren + summaryNode)
+        if (options.maxChildren > 0 && files.size > options.maxChildren) {
+            return handleMaxChildren(root, files, currentDepth, options)
         }
 
-        if (currentDepth >= maxDepth) {
-            if (files.isEmpty()) {
-                return TreeNode(root)
-            }
-
-            val summary = "... (${dirs.size} folders, ${regularFiles.size} files more)"
-            return TreeNode(root, children = listOf(
-                TreeNode(File(summary))
-            ))
+        if (currentDepth >= options.maxDepth) {
+            return handleMaxDepth(root, files, currentDepth, options)
         }
 
-        val children = root.listFiles()
-            ?.sortedWith(compareBy({ !it.isDirectory }, { it.name }))
-            ?.map { buildTree(it, currentDepth + 1, maxDepth) }
-            ?: emptyList()
-
-        return TreeNode(root, children)
+        return TreeNode(root, getChildren(files, options, currentDepth))
     }
+
+    private fun getChildren(files: List<File>, options: RenderOptions, currentDepth: Int): List<TreeNode> {
+        return files
+            .filterNot { shouldIgnore(it) }
+            .map { buildTree(options, it, currentDepth + 1) }
+    }
+
+    private fun handleMaxChildren(
+        root: File,
+        files: List<File>,
+        currentDepth: Int,
+        options: RenderOptions
+    ): TreeNode {
+        val visible = files.take(options.maxChildren)
+        val hidden = files.drop(options.maxChildren)
+
+        val (hiddenDirs, hiddenFiles) = hidden.partition { it.isDirectory }
+
+        if (shouldForgive(hidden.size, options.childForgiveness, options.smartExpand)) {
+            return TreeNode(root, getChildren(files, options, currentDepth))
+        }
+
+        val visibleChildren = getChildren(visible, options, currentDepth)
+
+        val summaryNode = TreeNode(
+            File("... (${hidden.size} more entries: ${hiddenDirs.size} folders, ${hiddenFiles.size} files)")
+        )
+
+        return TreeNode(root, visibleChildren + summaryNode)
+    }
+
+    private fun handleMaxDepth(
+        root: File,
+        files: List<File>,
+        currentDepth: Int,
+        options: RenderOptions
+    ): TreeNode {
+        if (files.isEmpty()) return TreeNode(root)
+
+        val (dirs, regularFiles) = files.partition { it.isDirectory }
+        val onlyFiles = dirs.isEmpty()
+        val underForgiveness = files.size <= options.depthForgiveness
+
+        if (onlyFiles || (options.smartExpand && underForgiveness)) {
+            return TreeNode(root, getChildren(files, options, currentDepth))
+        }
+
+        val summary = "... (${dirs.size} folders, ${regularFiles.size} files more)"
+        return TreeNode(root, children = listOf(TreeNode(File(summary))))
+    }
+
 
     /**
      * Renders a tree structure to a formatted text string
@@ -94,6 +121,15 @@ object TextTreeBuilder {
         }
 
         return builder.toString()
+    }
+
+    private fun shouldForgive(hiddenCount: Int, threshold: Int, forgive: Boolean): Boolean {
+        return forgive && hiddenCount <= threshold
+    }
+
+    // TODO: Expand later to use ignore files or patterns
+    private fun shouldIgnore(file: File): Boolean {
+        return file.name == ".git"
     }
 
 }

@@ -1,4 +1,4 @@
-package com.glance.treetrunk.core.tree
+package com.glance.treetrunk.core.tree.model
 
 import java.io.File
 

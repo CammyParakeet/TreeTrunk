@@ -1,8 +1,10 @@
 package com.glance.treetrunk.cli.commands
 
+import com.glance.treetrunk.core.tree.Defaults
 import com.glance.treetrunk.core.tree.Style
 import com.glance.treetrunk.core.tree.StyleRegistry
 import com.glance.treetrunk.core.tree.TextTreeBuilder
+import com.glance.treetrunk.core.tree.model.RenderOptions
 import picocli.CommandLine
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
@@ -56,16 +58,37 @@ class RenderCommand : Callable<Int> {
     @Option(
         names = ["--max-depth", "--depth"],
         description = ["Maximum directory depth to render (default: 8)"],
-        defaultValue = "8"
+        defaultValue = "10"
     )
-    var maxDepth: Int = 8
+    var maxDepth: Int = Defaults.MAX_DEPTH
 
     @Option(
         names = ["--max-children"],
         description = ["Maximum number of children per folder before collapsing (0 = no limit)"],
         defaultValue = "25"
     )
-    var maxChildren: Int = 25
+    var maxChildren: Int = Defaults.MAX_CHILDREN
+
+    @Option(
+        names = ["--forgive", "--smart-expand"],
+        description = ["Attempt to render beyond limits if only a few entries are hidden"],
+        defaultValue = "true"
+    )
+    var smartExpand: Boolean = true
+
+    @Option(
+        names = ["--depth-forgiveness"],
+        description = ["Override default render forgiveness at max depths"],
+        defaultValue = "4"
+    )
+    var depthForgiveness: Int = Defaults.DEPTH_FORGIVENESS_THRESHOLD
+
+    @Option(
+        names = ["--child-forgiveness"],
+        description = ["Override default render forgiveness at max children"],
+        defaultValue = "6"
+    )
+    var childForgiveness: Int = Defaults.CHILD_FORGIVENESS_THRESHOLD
 
     override fun call(): Int {
         if (!root.exists() || !root.isDirectory) {
@@ -73,11 +96,19 @@ class RenderCommand : Callable<Int> {
             return 1
         }
 
-        val tree = TextTreeBuilder.buildTree(
+        val options = RenderOptions(
             root,
-            maxDepth = maxDepth,
-            maxChildren = maxChildren
+            outputFile,
+            style,
+            customStyle,
+            maxDepth,
+            maxChildren,
+            smartExpand,
+            depthForgiveness,
+            childForgiveness
         )
+
+        val tree = TextTreeBuilder.buildTree(options, root)
 
         val symbols = customStyle?.let {
             StyleRegistry.get(it) ?: run {
