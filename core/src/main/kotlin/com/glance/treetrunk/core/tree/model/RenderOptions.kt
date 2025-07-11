@@ -13,5 +13,6 @@ data class RenderOptions(
     val maxChildren: Int = Defaults.MAX_CHILDREN,
     val smartExpand: Boolean = true,
     val depthForgiveness: Int = Defaults.DEPTH_FORGIVENESS_THRESHOLD,
-    val childForgiveness: Int = Defaults.CHILD_FORGIVENESS_THRESHOLD
+    val childForgiveness: Int = Defaults.CHILD_FORGIVENESS_THRESHOLD,
+    val collapseEmpty: Boolean = true
 )

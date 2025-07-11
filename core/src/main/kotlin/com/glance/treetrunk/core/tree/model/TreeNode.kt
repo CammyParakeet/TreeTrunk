@@ -10,5 +10,6 @@ import java.io.File
  */
 data class TreeNode(
     val file: File,
-    val children: List<TreeNode> = emptyList()
+    val children: List<TreeNode> = emptyList(),
+    val isDir: Boolean = file.isDirectory || children.isNotEmpty()
 )

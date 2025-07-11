@@ -23,23 +23,45 @@ object TextTreeBuilder {
         root: File = options.root,
         currentDepth: Int = 0,
     ): TreeNode {
-        val files = root.listFiles()?.sortedWith(compareBy({ !it.isDirectory }, { it.name })) ?: emptyList()
+        val (effectiveRoot, effectiveChildren) = if (options.collapseEmpty && root.isDirectory) {
+            collapseEmptyDirs(root)
+        } else {
+            root to (root.listFiles()?.toList() ?: emptyList())
+        }
+
+        val files = effectiveChildren
+            .filterNot { shouldIgnore(it) }
+            .sortedWith(compareBy({ !it.isDirectory }, { it.name }))
 
         if (options.maxChildren > 0 && files.size > options.maxChildren) {
-            return handleMaxChildren(root, files, currentDepth, options)
+            return handleMaxChildren(effectiveRoot, files, currentDepth, options)
         }
 
         if (currentDepth >= options.maxDepth) {
-            return handleMaxDepth(root, files, currentDepth, options)
+            return handleMaxDepth(effectiveRoot, files, currentDepth, options)
         }
 
-        return TreeNode(root, getChildren(files, options, currentDepth))
+        return TreeNode(effectiveRoot, getChildren(files, options, currentDepth))
     }
 
     private fun getChildren(files: List<File>, options: RenderOptions, currentDepth: Int): List<TreeNode> {
-        return files
-            .filterNot { shouldIgnore(it) }
-            .map { buildTree(options, it, currentDepth + 1) }
+        return files.map { buildTree(options, it, currentDepth + 1) }
+    }
+
+    private fun collapseEmptyDirs(file: File): Pair<File, List<File>> {
+        var current = file
+        val chain = mutableListOf<String>()
+
+        while (true) {
+            val children = current.listFiles()?.filter { it.isDirectory || it.isFile } ?: break
+            if (children.size != 1 || children.any { it.isFile }) break
+
+            chain.add(current.name)
+            current = children.first()
+        }
+
+        chain.add(current.name)
+        return File(chain.joinToString(".")) to (current.listFiles()?.toList() ?: emptyList())
     }
 
     private fun handleMaxChildren(
@@ -106,7 +128,7 @@ object TextTreeBuilder {
     ): String {
         val name = when {
             node.file.name.startsWith("...") -> node.file.name // todo anything custom
-            node.file.isDirectory -> node.file.name + "/"
+            node.isDir -> node.file.name + "/"
             else -> node.file.name
         }
 

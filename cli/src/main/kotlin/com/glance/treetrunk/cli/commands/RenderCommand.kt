@@ -90,6 +90,13 @@ class RenderCommand : Callable<Int> {
     )
     var childForgiveness: Int = Defaults.CHILD_FORGIVENESS_THRESHOLD
 
+    @Option(
+        names = ["--collapse-empty", "--collapse-packages"],
+        description = ["Collapse empty directory chains (e.g. com/example/foo)"],
+        defaultValue = "true"
+    )
+    var collapseEmpty: Boolean = true
+
     override fun call(): Int {
         if (!root.exists() || !root.isDirectory) {
             System.err.println("Invalid directory: ${root.absolutePath}")
@@ -105,7 +112,8 @@ class RenderCommand : Callable<Int> {
             maxChildren,
             smartExpand,
             depthForgiveness,
-            childForgiveness
+            childForgiveness,
+            collapseEmpty
         )
 
         val tree = TextTreeBuilder.buildTree(options, root)
