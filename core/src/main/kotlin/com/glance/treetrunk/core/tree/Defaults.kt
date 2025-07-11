@@ -1,5 +1,8 @@
 package com.glance.treetrunk.core.tree
 
+/**
+ * Global default values used throughout tree rendering
+ */
 object Defaults {
     const val MAX_DEPTH = 10
     const val MAX_CHILDREN = 25

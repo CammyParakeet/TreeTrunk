@@ -7,6 +7,7 @@ import java.io.File
  *
  * @property file The actual file or directory
  * @property children List of child TreeNodes (only populated for directories)
+ * @property isDir Truth check for synthetic directory
  */
 data class TreeNode(
     val file: File,

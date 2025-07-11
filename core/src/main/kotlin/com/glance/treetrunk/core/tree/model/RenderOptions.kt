@@ -4,6 +4,9 @@ import com.glance.treetrunk.core.tree.Defaults
 import com.glance.treetrunk.core.tree.Style
 import java.io.File
 
+/**
+ * Configuration options for building and rendering a file tree
+ */
 data class RenderOptions(
     val root: File = File("."),
     val outputFile: File? = null,

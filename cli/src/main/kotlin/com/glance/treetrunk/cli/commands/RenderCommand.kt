@@ -20,6 +20,11 @@ import java.util.concurrent.Callable
 )
 class RenderCommand : Callable<Int> {
 
+    /**
+     * The root directory to scan
+     *
+     * Defaults to the current directory if not specified
+     */
     @Parameters(
         index = "0",
         description = ["Root directory to scan"],
@@ -55,6 +60,11 @@ class RenderCommand : Callable<Int> {
     )
     var customStyle: String? = null
 
+    /**
+     * Maximum depth of directory traversal before truncating output
+     *
+     * Set higher to explore deeply nested structures
+     */
     @Option(
         names = ["--max-depth", "--depth"],
         description = ["Maximum directory depth to render (default: 8)"],
@@ -62,6 +72,11 @@ class RenderCommand : Callable<Int> {
     )
     var maxDepth: Int = Defaults.MAX_DEPTH
 
+    /**
+     * Maximum number of children to render per directory before summarizing
+     *
+     * Use 0 to disable this limit entirely at your own discretion
+     */
     @Option(
         names = ["--max-children"],
         description = ["Maximum number of children per folder before collapsing (0 = no limit)"],
@@ -69,6 +84,11 @@ class RenderCommand : Callable<Int> {
     )
     var maxChildren: Int = Defaults.MAX_CHILDREN
 
+    /**
+     * If true, allows exceeding max limits slightly when only a few entries are hidden
+     *
+     * Helps preserve readability when limits are nearly met
+     */
     @Option(
         names = ["--forgive", "--smart-expand"],
         description = ["Attempt to render beyond limits if only a few entries are hidden"],
@@ -76,6 +96,11 @@ class RenderCommand : Callable<Int> {
     )
     var smartExpand: Boolean = true
 
+    /**
+     * Threshold for how many hidden entries can be forgiven at max depth
+     *
+     * Only used if smart expansion is enabled
+     */
     @Option(
         names = ["--depth-forgiveness"],
         description = ["Override default render forgiveness at max depths"],
@@ -83,6 +108,11 @@ class RenderCommand : Callable<Int> {
     )
     var depthForgiveness: Int = Defaults.DEPTH_FORGIVENESS_THRESHOLD
 
+    /**
+     * Threshold for how many hidden children can be forgiven per directory
+     *
+     * Only used if smart expansion is enabled
+     */
     @Option(
         names = ["--child-forgiveness"],
         description = ["Override default render forgiveness at max children"],
@@ -90,6 +120,9 @@ class RenderCommand : Callable<Int> {
     )
     var childForgiveness: Int = Defaults.CHILD_FORGIVENESS_THRESHOLD
 
+    /**
+     * If true, collapses chains of empty directories into dot-separated paths
+     */
     @Option(
         names = ["--collapse-empty", "--collapse-packages"],
         description = ["Collapse empty directory chains (e.g. com/example/foo)"],
@@ -97,6 +130,9 @@ class RenderCommand : Callable<Int> {
     )
     var collapseEmpty: Boolean = true
 
+    /**
+     * Executes the command and renders the tree using the specified options
+     */
     override fun call(): Int {
         if (!root.exists() || !root.isDirectory) {
             System.err.println("Invalid directory: ${root.absolutePath}")

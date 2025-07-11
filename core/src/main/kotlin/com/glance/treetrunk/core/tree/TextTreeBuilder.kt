@@ -44,10 +44,18 @@ object TextTreeBuilder {
         return TreeNode(effectiveRoot, getChildren(files, options, currentDepth))
     }
 
+    /**
+     * Returns immediate children as TreeNodes, increasing depth by 1
+     */
     private fun getChildren(files: List<File>, options: RenderOptions, currentDepth: Int): List<TreeNode> {
         return files.map { buildTree(options, it, currentDepth + 1) }
     }
 
+    /**
+     * Collapses chains of single-child directories into a synthetic path (e.g. com/example/foo -> com.example.foo)
+     *
+     * @return A pair of the synthetic File and the final directory's children
+     */
     private fun collapseEmptyDirs(file: File): Pair<File, List<File>> {
         var current = file
         val chain = mutableListOf<String>()
@@ -64,6 +72,9 @@ object TextTreeBuilder {
         return File(chain.joinToString(".")) to (current.listFiles()?.toList() ?: emptyList())
     }
 
+    /**
+     * Handles logic when maxChildren threshold is exceeded
+     */
     private fun handleMaxChildren(
         root: File,
         files: List<File>,
@@ -88,6 +99,9 @@ object TextTreeBuilder {
         return TreeNode(root, visibleChildren + summaryNode)
     }
 
+    /**
+     * Handles logic when maxDepth threshold is reached
+     */
     private fun handleMaxDepth(
         root: File,
         files: List<File>,
@@ -145,11 +159,17 @@ object TextTreeBuilder {
         return builder.toString()
     }
 
+    /**
+     * Determines if we should allow rendering past the threshold
+     */
     private fun shouldForgive(hiddenCount: Int, threshold: Int, forgive: Boolean): Boolean {
         return forgive && hiddenCount <= threshold
     }
 
-    // TODO: Expand later to use ignore files or patterns
+    /**
+     * Returns true if the given file should be skipped from rendering
+     * TODO: Expand later to use ignore files or patterns
+     */
     private fun shouldIgnore(file: File): Boolean {
         return file.name == ".git"
     }
