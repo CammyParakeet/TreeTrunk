@@ -41,6 +41,12 @@ class RenderCommand : Callable<Int> {
     )
     var outputFile: File? = null
 
+    @Option(
+        names = ["--no-print"],
+        description = ["Do not print to console (only write to file)"]
+    )
+    var noPrint: Boolean = false
+
     /**
      * Output rendering style
      */
@@ -166,7 +172,8 @@ class RenderCommand : Callable<Int> {
             append(TextTreeBuilder.renderTree(tree, symbols = symbols))
         }
 
-        println(output)
+        val shouldPrintToConsole = outputFile == null || !noPrint
+        if (shouldPrintToConsole) println(output)
 
         outputFile?.let { file ->
             file.writeText(output)

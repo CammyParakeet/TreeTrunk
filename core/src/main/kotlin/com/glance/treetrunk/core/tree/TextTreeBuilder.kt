@@ -1,5 +1,7 @@
 package com.glance.treetrunk.core.tree
 
+import com.glance.treetrunk.core.strategy.ignore.IgnoreEngine
+import com.glance.treetrunk.core.strategy.ignore.IgnoreResolver
 import com.glance.treetrunk.core.tree.model.RenderOptions
 import com.glance.treetrunk.core.tree.model.TreeNode
 import java.io.File
@@ -23,6 +25,9 @@ object TextTreeBuilder {
         root: File = options.root,
         currentDepth: Int = 0,
     ): TreeNode {
+        val rules = IgnoreResolver.resolve(options.ignoreOptions)
+        val ignoreEngine = IgnoreEngine(rules)
+
         val (effectiveRoot, effectiveChildren) = if (options.collapseEmpty && root.isDirectory) {
             collapseEmptyDirs(root)
         } else {
