@@ -14,25 +14,19 @@ class GitIgnoreRule(private val ignoredNames: List<IgnoreRule>): IgnoreRule {
     }
 
 
-    companion object {
-        fun fromFile(file: File): GitIgnoreRule? {
-            if (!file.exists() || !file.isFile) return null
-            val patterns = file.readLines()
-                .map { it.trim() }
-                .filter { it.isNotBlank() && !it.startsWith("#") }
-                .map { convertToRule(it) }
-            return GitIgnoreRule(patterns)
-        }
-
-        private fun convertToRule(pattern: String): IgnoreRule {
-            return if (pattern.endsWith("/")) {
-                val dirName = pattern.removeSuffix("/")
-                val regex = """(^|.*/)$dirName(/.*|$)""".toRegex()
-                RegexIgnoreRule(regex)
-            } else {
-                RegexIgnoreRule.fromGlob(pattern)
-            }
-        }
-    }
+//    companion object {
+//        fun fromFile(file: File): GitIgnoreRule? {
+//            if (!file.exists() || !file.isFile) return null
+//            val patterns = file.readLines()
+//                .map { it.trim() }
+//                .filter { it.isNotBlank() && !it.startsWith("#") }
+//                .map { convertToRule(it) }
+//            return GitIgnoreRule(patterns)
+//        }
+//
+//        private fun convertToRule(pattern: String): IgnoreRule {
+//            // TODO
+//        }
+//    }
 
 }

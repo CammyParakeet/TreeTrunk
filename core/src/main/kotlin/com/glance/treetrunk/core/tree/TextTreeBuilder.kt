@@ -25,8 +25,8 @@ object TextTreeBuilder {
         root: File = options.root,
         currentDepth: Int = 0,
     ): TreeNode {
-        val rules = IgnoreResolver.resolve(options.ignoreOptions)
-        val ignoreEngine = IgnoreEngine(rules)
+//        val rules = IgnoreResolver.resolve(options.ignoreOptions)
+//        val ignoreEngine = IgnoreEngine(rules)
 
         val (effectiveRoot, effectiveChildren) = if (options.collapseEmpty && root.isDirectory) {
             collapseEmptyDirs(root)
