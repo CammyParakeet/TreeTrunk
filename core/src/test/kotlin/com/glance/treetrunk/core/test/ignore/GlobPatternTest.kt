@@ -39,7 +39,8 @@ class GlobPatternTest: StringSpec({
 
         pattern.matches("build") shouldBe false
         pattern.matches("build\\output.txt") shouldBe true
-        pattern.matches("nested\\build") shouldBe true
+        pattern.matches("nested\\build\\") shouldBe true
+        pattern.matches("nested\\build") shouldBe false
         pattern.matches("nested\\mybuild") shouldBe false
     }
 

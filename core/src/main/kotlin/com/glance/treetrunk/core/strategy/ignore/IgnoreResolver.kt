@@ -2,6 +2,9 @@ package com.glance.treetrunk.core.strategy.ignore
 
 import com.glance.treetrunk.core.strategy.ignore.base.GitIgnoreRule
 
+/**
+ * Resolves ignore rules based on [IgnoreOptions]
+ */
 object IgnoreResolver {
 
     //private val defaultIgnores = loadDefaults()

@@ -154,7 +154,7 @@ class RenderCommand : Callable<Int> {
         }
 
         val ignoreOptions = IgnoreOptions(
-            propagateLocalIgnored = !noLocalIgnorePropagation
+            propagateLocalIgnores = !noLocalIgnorePropagation
         )
 
         val options = RenderOptions(
