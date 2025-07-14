@@ -6,6 +6,7 @@ import java.io.File
 /**
  * An [IgnoreRule] that encapsulates rules with .gitignore patterns
  */
+@Deprecated("")
 class GitIgnoreRule(private val ignoredNames: List<GlobIgnoreRule>): IgnoreRule {
 
     override fun shouldIgnore(file: File, relativePath: String): Boolean {
@@ -30,3 +31,5 @@ class GitIgnoreRule(private val ignoredNames: List<GlobIgnoreRule>): IgnoreRule 
     }
 
 }
+
+typealias TreeIgnoreRule = GitIgnoreRule

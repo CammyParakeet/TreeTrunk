@@ -4,7 +4,7 @@ import com.glance.treetrunk.core.strategy.ignore.IgnoreOptions
 import com.glance.treetrunk.core.tree.Defaults
 import com.glance.treetrunk.core.tree.Style
 import com.glance.treetrunk.core.tree.StyleRegistry
-import com.glance.treetrunk.core.tree.TextTreeBuilder
+import com.glance.treetrunk.core.tree.TreeBuilder
 import com.glance.treetrunk.core.tree.model.RenderOptions
 import picocli.CommandLine
 import picocli.CommandLine.Option
@@ -170,7 +170,7 @@ class RenderCommand : Callable<Int> {
             collapseEmpty
         )
 
-        val tree = TextTreeBuilder.buildTree(options, root)
+        val tree = TreeBuilder.buildTree(options, root)
 
         val symbols = customStyle?.let {
             StyleRegistry.get(it) ?: run {
@@ -181,7 +181,7 @@ class RenderCommand : Callable<Int> {
 
         val output = buildString {
             appendLine(root.name + "/")
-            append(TextTreeBuilder.renderTree(tree, symbols = symbols))
+            append(TreeBuilder.renderTree(tree, symbols = symbols))
         }
 
         val shouldPrintToConsole = outputFile == null || !noPrint

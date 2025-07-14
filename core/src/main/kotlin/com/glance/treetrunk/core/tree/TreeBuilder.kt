@@ -9,7 +9,7 @@ import java.io.File
 /**
  * Builds a recursive file tree and renders it in CLI-friendly formats
  */
-object TextTreeBuilder {
+object TreeBuilder {
 
     /**
      * Builds the tree structure starting from the provided root directory
@@ -25,8 +25,8 @@ object TextTreeBuilder {
         root: File = options.root,
         currentDepth: Int = 0,
     ): TreeNode {
-//        val rules = IgnoreResolver.resolve(options.ignoreOptions)
-//        val ignoreEngine = IgnoreEngine(rules)
+        val rules = IgnoreResolver.resolve(root, options.ignoreOptions)
+        val ignoreEngine = IgnoreEngine(rules)
 
         val (effectiveRoot, effectiveChildren) = if (options.collapseEmpty && root.isDirectory) {
             collapseEmptyDirs(root)
@@ -127,6 +127,7 @@ object TextTreeBuilder {
         return TreeNode(root, children = listOf(TreeNode(File(summary))))
     }
 
+    // TODO move render logic out to decouple
 
     /**
      * Renders a tree structure to a formatted text string
