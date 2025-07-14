@@ -1,23 +1,20 @@
 package com.glance.treetrunk.core.strategy.ignore
 
 import com.glance.treetrunk.core.strategy.ignore.base.GitIgnoreRule
-import com.glance.treetrunk.core.strategy.ignore.base.NameIgnoreRule
+import com.glance.treetrunk.core.strategy.ignore.base.PatternIgnoreRule
 
 object IgnoreResolver {
 
-    // TODO - install file for this
-    private val defaultIgnores = listOf(
-        ".git", ".idea", "node_modules", "build", "out", "dist", ".DS_Store"
-    )
+    private val defaultIgnores = loadDefaults()
 
     fun resolve(options: IgnoreOptions): List<IgnoreRule> {
         val rules = mutableListOf<IgnoreRule>()
 
         if (options.useDefaultIgnores) {
-            rules += defaultIgnores.map((::NameIgnoreRule))
+            rules += defaultIgnores.map((::PatternIgnoreRule))
         }
 
-        rules += options.customIgnoreNames.map(::NameIgnoreRule)
+        rules += options.customIgnoreNames.map(::PatternIgnoreRule)
 
         options.ignoreFile
             ?.takeIf { it.exists() }
@@ -25,6 +22,17 @@ object IgnoreResolver {
             ?.let { rules += it }
 
         return rules
+    }
+
+    private fun loadDefaults(): List<String> {
+        val stream = javaClass.getResourceAsStream("/defaults.trunkignore")
+            ?: return emptyList()
+
+        return stream.bufferedReader().useLines { lines ->
+            lines.map { it.trim() }
+                .filter { it.isNotBlank() && !it.startsWith("#") }
+                .toList()
+        }
     }
 
 }

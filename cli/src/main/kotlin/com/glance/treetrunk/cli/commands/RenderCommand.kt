@@ -1,5 +1,6 @@
 package com.glance.treetrunk.cli.commands
 
+import com.glance.treetrunk.core.strategy.ignore.IgnoreOptions
 import com.glance.treetrunk.core.tree.Defaults
 import com.glance.treetrunk.core.tree.Style
 import com.glance.treetrunk.core.tree.StyleRegistry
@@ -136,6 +137,13 @@ class RenderCommand : Callable<Int> {
     )
     var collapseEmpty: Boolean = true
 
+    @Option(
+        names = ["--no-local-ignore-propagation", "-N"],
+        description = ["Do not propagate local ignore rules to subdirectories"],
+        defaultValue = "false"
+    )
+    var noLocalIgnorePropagation: Boolean = false
+
     /**
      * Executes the command and renders the tree using the specified options
      */
@@ -144,6 +152,10 @@ class RenderCommand : Callable<Int> {
             System.err.println("Invalid directory: ${root.absolutePath}")
             return 1
         }
+
+        val ignoreOptions = IgnoreOptions(
+            propagateLocalIgnored = !noLocalIgnorePropagation
+        )
 
         val options = RenderOptions(
             root,
