@@ -1,5 +1,6 @@
 package com.glance.treetrunk.core.tree.model
 
+import com.glance.treetrunk.core.strategy.ignore.IgnoreOptions
 import com.glance.treetrunk.core.tree.Defaults
 import com.glance.treetrunk.core.tree.Style
 import java.io.File
@@ -17,5 +18,6 @@ data class RenderOptions(
     val smartExpand: Boolean = true,
     val depthForgiveness: Int = Defaults.DEPTH_FORGIVENESS_THRESHOLD,
     val childForgiveness: Int = Defaults.CHILD_FORGIVENESS_THRESHOLD,
-    val collapseEmpty: Boolean = true
+    val collapseEmpty: Boolean = true,
+    val ignoreOptions: IgnoreOptions = IgnoreOptions()
 )

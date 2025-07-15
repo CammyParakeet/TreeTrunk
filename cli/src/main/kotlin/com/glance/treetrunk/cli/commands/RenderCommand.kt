@@ -1,9 +1,10 @@
 package com.glance.treetrunk.cli.commands
 
+import com.glance.treetrunk.core.strategy.ignore.IgnoreOptions
 import com.glance.treetrunk.core.tree.Defaults
 import com.glance.treetrunk.core.tree.Style
 import com.glance.treetrunk.core.tree.StyleRegistry
-import com.glance.treetrunk.core.tree.TextTreeBuilder
+import com.glance.treetrunk.core.tree.TreeBuilder
 import com.glance.treetrunk.core.tree.model.RenderOptions
 import picocli.CommandLine
 import picocli.CommandLine.Option
@@ -40,6 +41,12 @@ class RenderCommand : Callable<Int> {
         description = ["Optional output file to write the tree to"]
     )
     var outputFile: File? = null
+
+    @Option(
+        names = ["--no-print"],
+        description = ["Do not print to console (only write to file)"]
+    )
+    var noPrint: Boolean = false
 
     /**
      * Output rendering style
@@ -130,6 +137,13 @@ class RenderCommand : Callable<Int> {
     )
     var collapseEmpty: Boolean = true
 
+    @Option(
+        names = ["--no-local-ignore-propagation", "-N"],
+        description = ["Do not propagate local ignore rules to subdirectories"],
+        defaultValue = "false"
+    )
+    var noLocalIgnorePropagation: Boolean = false
+
     /**
      * Executes the command and renders the tree using the specified options
      */
@@ -138,6 +152,12 @@ class RenderCommand : Callable<Int> {
             System.err.println("Invalid directory: ${root.absolutePath}")
             return 1
         }
+
+        val ignoreOptions = IgnoreOptions(
+            propagateLocalIgnores = !noLocalIgnorePropagation
+        )
+
+        println("Using Ignore Options: $ignoreOptions")
 
         val options = RenderOptions(
             root,
@@ -149,10 +169,11 @@ class RenderCommand : Callable<Int> {
             smartExpand,
             depthForgiveness,
             childForgiveness,
-            collapseEmpty
+            collapseEmpty,
+            ignoreOptions
         )
 
-        val tree = TextTreeBuilder.buildTree(options, root)
+        val tree = TreeBuilder.buildTree(options, root)
 
         val symbols = customStyle?.let {
             StyleRegistry.get(it) ?: run {
@@ -163,10 +184,11 @@ class RenderCommand : Callable<Int> {
 
         val output = buildString {
             appendLine(root.name + "/")
-            append(TextTreeBuilder.renderTree(tree, symbols = symbols))
+            append(TreeBuilder.renderTree(tree, symbols = symbols))
         }
 
-        println(output)
+        val shouldPrintToConsole = outputFile == null || !noPrint
+        if (shouldPrintToConsole) println(output)
 
         outputFile?.let { file ->
             file.writeText(output)

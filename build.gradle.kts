@@ -9,10 +9,6 @@ allprojects {
     repositories {
         mavenCentral()
     }
-
-    dependencies {
-
-    }
 }
 
 subprojects {

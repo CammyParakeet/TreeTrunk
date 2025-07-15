@@ -1,5 +1,9 @@
 package com.glance.treetrunk.core.tree
 
+import com.glance.treetrunk.core.strategy.ignore.IgnoreEngine
+import com.glance.treetrunk.core.strategy.ignore.IgnoreResolver
+import com.glance.treetrunk.core.strategy.ignore.file.IgnoreFileParser
+import com.glance.treetrunk.core.strategy.ignore.file.IgnoreFileParserRegistry
 import com.glance.treetrunk.core.tree.model.RenderOptions
 import com.glance.treetrunk.core.tree.model.TreeNode
 import java.io.File
@@ -7,7 +11,7 @@ import java.io.File
 /**
  * Builds a recursive file tree and renders it in CLI-friendly formats
  */
-object TextTreeBuilder {
+object TreeBuilder {
 
     /**
      * Builds the tree structure starting from the provided root directory
@@ -15,7 +19,7 @@ object TextTreeBuilder {
      * @param root The root directory to scan
      * @return A TreeNode representing the root and all its children
      *
-     * TODO: Add support for preset & manual ignore lists, hidden files, symlink handling, and more
+     * TODO: Add support for preset, hidden files, symlink handling, and more
      * TODO: defaults from installed properties or cfg? Would need cli update too
      */
     fun buildTree(
@@ -23,32 +27,77 @@ object TextTreeBuilder {
         root: File = options.root,
         currentDepth: Int = 0,
     ): TreeNode {
-        val (effectiveRoot, effectiveChildren) = if (options.collapseEmpty && root.isDirectory) {
-            collapseEmptyDirs(root)
+        val rules = IgnoreResolver.resolve(root, options.ignoreOptions)
+        val ignoreEngine = IgnoreEngine(rules)
+
+        return buildRecursive(
+            root,
+            ignoreEngine,
+            options,
+            currentDepth,
+            ""
+        ) ?: TreeNode(root, emptyList())
+    }
+
+    private fun buildRecursive(
+        file: File,
+        ignoreEngine: IgnoreEngine,
+        options: RenderOptions,
+        currentDepth: Int,
+        relativePath: String
+    ): TreeNode? {
+        if (ignoreEngine.shouldIgnore(file, relativePath)) return null
+
+        var currentEngine = ignoreEngine
+
+        if (file.isDirectory && options.ignoreOptions.useLocalIgnores) {
+            val localIgnoreRules = file.listFiles()?.flatMap { child ->
+                IgnoreFileParserRegistry.findParserFor(child.name)?.parse(child) ?: emptyList()
+            }.orEmpty()
+
+            if (localIgnoreRules.isNotEmpty()) {
+                currentEngine = if (options.ignoreOptions.propagateLocalIgnores) {
+                    ignoreEngine.addRules(localIgnoreRules)
+                } else {
+                    IgnoreEngine(localIgnoreRules)
+                }
+            }
+        }
+
+        val (effectiveFile, effectiveChildren) = if (options.collapseEmpty && file.isDirectory) {
+            collapseEmptyDirs(file)
         } else {
-            root to (root.listFiles()?.toList() ?: emptyList())
+            file to (file.listFiles()?.toList() ?: emptyList())
         }
 
         val files = effectiveChildren
-            .filterNot { shouldIgnore(it) }
             .sortedWith(compareBy({ !it.isDirectory }, { it.name }))
 
-        if (options.maxChildren > 0 && files.size > options.maxChildren) {
-            return handleMaxChildren(effectiveRoot, files, currentDepth, options)
+        val childNodes = files.mapNotNull { child ->
+            buildRecursive(
+                file = child,
+                ignoreEngine = currentEngine,
+                options = options,
+                currentDepth = currentDepth + 1,
+                relativePath = pathFor(child, relativePath)
+            )
+        }
+        val childrenSize = childNodes.size
+
+        if (options.maxChildren in 1..<childrenSize) {
+            return handleMaxChildren(effectiveFile, childNodes, options)
         }
 
-        if (currentDepth >= options.maxDepth) {
-            return handleMaxDepth(effectiveRoot, files, currentDepth, options)
+        if (options.maxDepth in 1..currentDepth) {
+            return handleMaxDepth(effectiveFile, childNodes, options)
         }
 
-        return TreeNode(effectiveRoot, getChildren(files, options, currentDepth))
+        return TreeNode(effectiveFile, childNodes)
     }
 
-    /**
-     * Returns immediate children as TreeNodes, increasing depth by 1
-     */
-    private fun getChildren(files: List<File>, options: RenderOptions, currentDepth: Int): List<TreeNode> {
-        return files.map { buildTree(options, it, currentDepth + 1) }
+    private fun pathFor(file: File, parentPath: String): String {
+        val base = if (parentPath.isEmpty()) file.name else "$parentPath/${file.name}"
+        return if (file.isDirectory) "$base/" else base
     }
 
     /**
@@ -77,26 +126,24 @@ object TextTreeBuilder {
      */
     private fun handleMaxChildren(
         root: File,
-        files: List<File>,
-        currentDepth: Int,
+        children: List<TreeNode>,
         options: RenderOptions
     ): TreeNode {
-        val visible = files.take(options.maxChildren)
-        val hidden = files.drop(options.maxChildren)
+        val visible = children.take(options.maxChildren)
+        val hidden = children.drop(options.maxChildren)
 
-        val (hiddenDirs, hiddenFiles) = hidden.partition { it.isDirectory }
+        val hiddenDirs = hidden.count { it.isDir }
+        val hiddenFiles = hidden.size - hiddenDirs
 
         if (shouldForgive(hidden.size, options.childForgiveness, options.smartExpand)) {
-            return TreeNode(root, getChildren(files, options, currentDepth))
+            return TreeNode(root, children)
         }
 
-        val visibleChildren = getChildren(visible, options, currentDepth)
-
         val summaryNode = TreeNode(
-            File("... (${hidden.size} more entries: ${hiddenDirs.size} folders, ${hiddenFiles.size} files)")
+            File("... (${hidden.size} more entries: $hiddenDirs folders, $hiddenFiles files)")
         )
 
-        return TreeNode(root, visibleChildren + summaryNode)
+        return TreeNode(root, visible + summaryNode)
     }
 
     /**
@@ -104,24 +151,25 @@ object TextTreeBuilder {
      */
     private fun handleMaxDepth(
         root: File,
-        files: List<File>,
-        currentDepth: Int,
+        children: List<TreeNode>,
         options: RenderOptions
     ): TreeNode {
-        if (files.isEmpty()) return TreeNode(root)
+        if (children.isEmpty()) return TreeNode(root)
 
-        val (dirs, regularFiles) = files.partition { it.isDirectory }
-        val onlyFiles = dirs.isEmpty()
-        val underForgiveness = files.size <= options.depthForgiveness
+        val dirs = children.count { it.isDir }
+        val files = children.size - dirs
+        val onlyFiles = dirs == 0
+        val underForgiveness = children.size <= options.depthForgiveness
 
         if (onlyFiles || (options.smartExpand && underForgiveness)) {
-            return TreeNode(root, getChildren(files, options, currentDepth))
+            return TreeNode(root, children)
         }
 
-        val summary = "... (${dirs.size} folders, ${regularFiles.size} files more)"
+        val summary = "... ($dirs folders, $files files more)"
         return TreeNode(root, children = listOf(TreeNode(File(summary))))
     }
 
+    // TODO move render logic out to decouple
 
     /**
      * Renders a tree structure to a formatted text string
@@ -164,14 +212,6 @@ object TextTreeBuilder {
      */
     private fun shouldForgive(hiddenCount: Int, threshold: Int, forgive: Boolean): Boolean {
         return forgive && hiddenCount <= threshold
-    }
-
-    /**
-     * Returns true if the given file should be skipped from rendering
-     * TODO: Expand later to use ignore files or patterns
-     */
-    private fun shouldIgnore(file: File): Boolean {
-        return file.name == ".git"
     }
 
 }
