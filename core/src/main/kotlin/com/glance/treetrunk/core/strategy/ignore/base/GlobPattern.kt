@@ -17,6 +17,10 @@ class GlobPattern(
 
     private val regex: Regex = compileGlobToRegex(glob, depthMode)
 
+    fun getPattern(): String {
+        return regex.pattern
+    }
+
     /**
      * Tests whether the given path matches the glob pattern
      *
@@ -27,6 +31,10 @@ class GlobPattern(
         val result = regex.matches(normalizedPath)
         //println("GlobPattern matching '$normalizedPath' against '$regex' => $result")
         return result
+    }
+
+    override fun toString(): String {
+        return "GlobPattern(glob='$glob', depthMode=$depthMode, regex=$regex)"
     }
 
     companion object {
@@ -79,5 +87,7 @@ class GlobPattern(
             return sb.toString().toRegex()
         }
     }
+
+
 
 }

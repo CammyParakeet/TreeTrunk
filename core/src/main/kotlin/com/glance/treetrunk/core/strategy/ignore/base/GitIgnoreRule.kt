@@ -13,6 +13,10 @@ class GitIgnoreRule(private val ignoredNames: List<GlobIgnoreRule>): IgnoreRule 
         return ignoredNames.any { it.shouldIgnore(file, relativePath) }
     }
 
+    override fun ruleKey(): String {
+        TODO("Not yet implemented")
+    }
+
     override fun toString(): String {
         return "GitIgnoreRule(ignoredNames=$ignoredNames)"
     }

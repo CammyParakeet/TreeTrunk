@@ -7,6 +7,7 @@ import java.io.File
 
 object TreeIgnoreParser : IgnoreFileParser {
     override val fileName: String = ".treeignore"
+    override val fileNamePattern: Regex = """.*\.(treeignore|trunkignore)""".toRegex()
 
     override fun parse(file: File): List<IgnoreRule> {
         // todo centralize this code block

@@ -20,4 +20,12 @@ class IgnoreEngine(private val rules: List<IgnoreRule>) {
      */
     fun shouldIgnorePath(path: String) = shouldIgnore(File(path), path)
 
+    /**
+     * Combines rules with additional ones, de-duplicating them
+     */
+    fun addRules(additional: List<IgnoreRule>): IgnoreEngine {
+        val combined = (this.rules + additional).distinctBy { it.ruleKey() }
+        return IgnoreEngine(combined)
+    }
+
 }

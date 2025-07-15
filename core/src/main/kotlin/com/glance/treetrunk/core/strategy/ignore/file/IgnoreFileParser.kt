@@ -13,6 +13,11 @@ interface IgnoreFileParser {
     val fileName: String
 
     /**
+     * Optional regex for flexible ignore filename resolution
+     */
+    val fileNamePattern: Regex?
+
+    /**
      * Parses the ignore file into one or more [IgnoreRule]s
      */
     fun parse(file: File): List<IgnoreRule>

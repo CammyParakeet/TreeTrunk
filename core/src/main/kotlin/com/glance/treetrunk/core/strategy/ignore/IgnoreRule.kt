@@ -18,4 +18,10 @@ interface IgnoreRule {
     fun shouldIgnorePath(relativePath: String): Boolean {
         return shouldIgnore(File(relativePath), relativePath)
     }
+
+    /**
+     * Unique key representing this rule, for comparisons
+     */
+    fun ruleKey(): String
+
 }

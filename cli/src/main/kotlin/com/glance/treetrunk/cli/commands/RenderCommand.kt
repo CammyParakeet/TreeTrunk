@@ -157,6 +157,8 @@ class RenderCommand : Callable<Int> {
             propagateLocalIgnores = !noLocalIgnorePropagation
         )
 
+        println("Using Ignore Options: $ignoreOptions")
+
         val options = RenderOptions(
             root,
             outputFile,
@@ -167,7 +169,8 @@ class RenderCommand : Callable<Int> {
             smartExpand,
             depthForgiveness,
             childForgiveness,
-            collapseEmpty
+            collapseEmpty,
+            ignoreOptions
         )
 
         val tree = TreeBuilder.buildTree(options, root)

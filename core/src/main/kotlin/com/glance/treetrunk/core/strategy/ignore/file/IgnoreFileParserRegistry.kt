@@ -16,7 +16,10 @@ object IgnoreFileParserRegistry {
      * Finds a parser based on a file name match
      */
     fun findParserFor(fileName: String): IgnoreFileParser? {
-        return parsers.find { it.fileName == fileName }
+        return parsers.find { parser ->
+            parser.fileName == fileName ||
+            parser.fileNamePattern?.matches(fileName) == true
+        }
     }
 
 }

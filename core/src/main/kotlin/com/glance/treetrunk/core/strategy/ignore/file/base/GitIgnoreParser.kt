@@ -7,6 +7,7 @@ import java.io.File
 
 object GitIgnoreParser : IgnoreFileParser {
     override val fileName: String = ".gitignore"
+    override val fileNamePattern: Regex? = null
 
     override fun parse(file: File): List<IgnoreRule> {
         return file.readLines()

@@ -9,8 +9,8 @@ import java.io.File
  * An [IgnoreRule] backed by a glob pattern
  */
 class GlobIgnoreRule(
-    glob: String,
-    depthMode: DepthMode = Defaults.DEPTH_MODE
+    private val glob: String,
+    private val depthMode: DepthMode = Defaults.DEPTH_MODE
 ) : IgnoreRule {
 
     private val pattern = GlobPattern(glob, depthMode)
@@ -18,4 +18,14 @@ class GlobIgnoreRule(
     override fun shouldIgnore(file: File, relativePath: String): Boolean {
         return pattern.matches(relativePath)
     }
+
+    override fun ruleKey(): String {
+        return "Glob:$glob:Depth:$depthMode"
+    }
+
+    override fun toString(): String {
+        return "Glob($glob => ${pattern.getPattern()})"
+    }
+
+
 }
