@@ -13,6 +13,13 @@ import java.io.File
  */
 object IgnoreResolver {
 
+    /**
+     * Resolves and returns a complete list of [IgnoreRule]s for the given base directory and strategy config
+     *
+     * @param baseDirectory the directory to scan for local ignore files
+     * @param config the configured ignore strategies and sources
+     * @return the complete list of applicable [IgnoreRule]s
+     */
     fun resolve(baseDirectory: File, config: StrategyConfig): List<IgnoreRule> {
         val rules = mutableListOf<IgnoreRule>()
 
@@ -44,6 +51,7 @@ object IgnoreResolver {
         return rules
     }
 
+    /** Loads the default ignore rules from the 'defaults' preset */
     private fun loadDefaults(): List<IgnoreRule> {
         return StrategyLoader
             .loadStrategyFile<IgnoreRule>("defaults", Strategy.IGNORE)

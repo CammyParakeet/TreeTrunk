@@ -9,10 +9,19 @@ import com.glance.treetrunk.core.strategy.include.rule.IncludeRule
 import java.io.File
 
 /**
- * Resolves include rules based on the provided [StrategyConfig] and directory scanning
+ * Resolves [IncludeRule]s based on the provided [StrategyConfig] and a base directory
+ *
+ * Aggregates command-line provided patterns, presets, explicit files, and local include files within the directory
  */
 object IncludeResolver {
 
+    /**
+     * Resolves and returns a complete list of [IncludeRule]s for the given base directory and strategy config
+     *
+     * @param baseDirectory the directory to scan for local include files
+     * @param config the configured include strategies and sources
+     * @return the complete list of applicable [IncludeRule]s
+     */
     fun resolve(baseDirectory: File, config: StrategyConfig): List<IncludeRule> {
         val rules = mutableListOf<IncludeRule>()
 

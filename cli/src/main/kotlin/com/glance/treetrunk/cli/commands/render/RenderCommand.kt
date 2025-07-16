@@ -29,15 +29,27 @@ class RenderCommand : Callable<Int> {
     )
     var root: File = File(".")
 
+    /**
+     * Options that control rendering output such as styling and formatting
+     */
     @CommandLine.ArgGroup(exclusive = false, multiplicity = "0..1")
     var renderOptions: RenderOptions? = null
 
+    /**
+     * Options that configure the scanning strategy such as include and exclude rules
+     */
     @CommandLine.ArgGroup(exclusive = false, multiplicity = "0..1")
     var strategyOptions: StrategyOptions? = null
 
+    /**
+     * Options that configure the advanced scanning settings such as depth limits or child limits
+     */
     @CommandLine.ArgGroup(exclusive = false, multiplicity = "0..1")
     var advancedOptions: AdvancedOptions? = null
 
+    /**
+     * Options for output destinations such as writing to a file instead of printing to console
+     */
     @CommandLine.ArgGroup(exclusive = false, multiplicity = "0..1")
     var outputOptions: OutputOptions? = null
 
@@ -54,6 +66,12 @@ class RenderCommand : Callable<Int> {
         return executeRender(config)
     }
 
+    /**
+     * Builds an [AppConfiguration] object combining all specified options, or their defaults if unspecified
+     *
+     * @param root the directory to scan
+     * @return the aggregated application configuration for tree building and rendering
+     */
     private fun buildConfiguration(root: File): AppConfiguration {
       return AppConfiguration.builder()
           .root(root)
@@ -63,6 +81,14 @@ class RenderCommand : Callable<Int> {
           .build()
     }
 
+    /**
+     * Executes the tree rendering process using the provided configuration
+     *
+     * Renders the tree structure, applies styling, outputs to console and/or file as specified
+     *
+     * @param config the configuration governing tree scanning, rendering, and output
+     * @return exit code '0' on success, or '1' if rendering failed due to issues
+     */
     private fun executeRender(config: AppConfiguration): Int {
         val tree = TreeBuilder.buildTree(config)
 

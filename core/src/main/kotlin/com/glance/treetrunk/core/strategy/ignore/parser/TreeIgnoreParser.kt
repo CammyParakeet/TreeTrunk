@@ -6,6 +6,11 @@ import com.glance.treetrunk.core.strategy.ignore.rule.IgnoreRule
 import com.glance.treetrunk.core.strategy.ignore.rule.GlobIgnoreRule
 import java.io.File
 
+/**
+ * Strategy file parser for '.treeignore' and related custom ignore files
+ *
+ * Matches files ending in '.treeignore' or '.trunkignore' via regex
+ */
 object TreeIgnoreParser : StrategyFileParser<IgnoreRule> {
     override val fileName: String = ".treeignore"
     override val fileNamePattern: Regex = """.*\.(treeignore|trunkignore)""".toRegex()

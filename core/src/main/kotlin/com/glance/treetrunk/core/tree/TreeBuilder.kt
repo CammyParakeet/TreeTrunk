@@ -14,7 +14,7 @@ import com.glance.treetrunk.core.tree.model.TreeNode
 import java.io.File
 
 /**
- * Builds a recursive file tree and renders it in CLI-friendly formats
+ * Responsible for building a recursive directory tree and rendering it into a defined structure
  */
 object TreeBuilder {
 
@@ -24,8 +24,7 @@ object TreeBuilder {
      * @param config TreeTrunk application config
      * @return A TreeNode representing the root and all its children
      *
-     * TODO: Add support for preset, hidden files, symlink handling, and more
-     * TODO: defaults from installed properties or cfg? Would need cli update too
+     * TODO: Add support for, hidden files, symlink handling, and more
      */
     fun buildTree(
         config: AppConfiguration,
@@ -49,6 +48,12 @@ object TreeBuilder {
         ) ?: TreeNode(rootDir, emptyList())
     }
 
+    /**
+     * Recursively builds a tree node for the provided file, respecting configured rules
+     * and rendering constraints
+     *
+     * @return a [TreeNode] or null if the file should be excluded
+     */
     private fun buildRecursive(
         file: File,
         config: AppConfiguration,
@@ -136,6 +141,11 @@ object TreeBuilder {
         return TreeNode(effectiveFile, childNodes)
     }
 
+    /**
+     * Constructs the relative path of a file within the tree structure
+     *
+     * Adds a trailing slash for directories
+     */
     private fun pathFor(file: File, parentPath: String): String {
         val base = if (parentPath.isEmpty()) file.name else "$parentPath/${file.name}"
         return if (file.isDirectory) "$base/" else base
@@ -163,7 +173,10 @@ object TreeBuilder {
     }
 
     /**
-     * Handles logic when maxChildren threshold is exceeded
+     * Handles rendering behavior when the maximum number of children has been exceeded
+     *
+     * Depending on [AdvancedConfig.smartExpand] and forgiveness thresholds, it may either
+     * display all children or insert a summary node indicating how many entries were omitted
      */
     private fun handleMaxChildren(
         root: File,
@@ -188,7 +201,10 @@ object TreeBuilder {
     }
 
     /**
-     * Handles logic when maxDepth threshold is reached
+     * Handles rendering behavior when the maximum depth of recursion has been reached
+     *
+     * If smart expansion is enabled and the remaining children are within the [AdvancedConfig.depthForgiveness],
+     * the children will still be rendered. Otherwise, a summary node will be displayed instead
      */
     private fun handleMaxDepth(
         root: File,
