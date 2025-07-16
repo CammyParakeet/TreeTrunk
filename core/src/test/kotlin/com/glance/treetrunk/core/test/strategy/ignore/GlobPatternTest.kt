@@ -1,4 +1,4 @@
-package com.glance.treetrunk.core.test.ignore
+package com.glance.treetrunk.core.test.strategy.ignore
 
 import com.glance.treetrunk.core.strategy.ignore.base.GlobPattern
 import io.kotest.core.spec.style.StringSpec
