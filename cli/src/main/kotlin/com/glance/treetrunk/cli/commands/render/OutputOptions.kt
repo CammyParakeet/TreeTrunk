@@ -18,11 +18,20 @@ class OutputOptions {
     var outputFile: File? = null
 
     @Option(
+        names = ["--keep-print"],
+        description = ["Only read if an output is supplied, keeps the render to console"]
+    )
+    var keepPrint: Boolean = false
+
+    @Option(
         names = ["--no-print"],
         description = ["Do not print to console (only write to file)"]
     )
     var noPrint: Boolean = false
 
-    fun shouldPrintToConsole(): Boolean = outputFile == null || !noPrint
+    fun shouldPrintToConsole(): Boolean {
+        if (noPrint) return false
+        return outputFile == null || keepPrint
+    }
 
 }

@@ -73,17 +73,18 @@ class RenderCommand : Callable<Int> {
             }
         } ?: config.renderConfig.style.symbols
 
-        val output = buildString {
+        val render = buildString {
             appendLine(root.name + "/")
             append(TreeBuilder.renderTree(tree, symbols = symbols))
         }
 
-        if (outputOptions?.shouldPrintToConsole() == false) {
-            println(output)
+        val outputOpt = outputOptions ?: OutputOptions()
+        if (outputOpt.shouldPrintToConsole()) {
+            println(render)
         }
 
-        outputOptions?.outputFile?.let {
-            it.writeText(output)
+        outputOpt.outputFile?.let {
+            it.writeText(render)
             println("Tree exported to '${it.absolutePath}'")
         }
 

@@ -1,21 +1,24 @@
 package com.glance.treetrunk.cli.commands.render
 
 import com.glance.treetrunk.core.config.StrategyConfig
+import com.glance.treetrunk.core.strategy.include.InclusionMode
 import picocli.CommandLine.Option
 
 class StrategyOptions {
 
     /**
-     * Whether to propagate local strategy rules ignore into subdirectories
+     * Set the inclusion mode for when include rules are supplied:
+     * - [InclusionMode.OVERRIDE_IGNORE] = Soft Include, overrides ignore rules
+     * - [InclusionMode.FILTER] = Hard Include, only accepts files that match include rules, when supplied
      */
     @Option(
-        names = ["--inlusion-priority"],
-        description = ["Include rules take priority over ignore rules"]
+        names = ["--inlusion-mode"],
+        description = ["Inclusion mode as soft or hard: \${COMPLETION-CANDIDATES}"]
     )
-    var inclusionPriority: Boolean = false
+    var inclusionMode: InclusionMode = InclusionMode.OVERRIDE_IGNORE
 
     /**
-     * Whether to propagate local strategy rules ignore into subdirectories
+     * Whether to use the installed default ignore rules, includes common rules like '.git'
      */
     @Option(
         names = ["--no-default-ignore"],
@@ -33,7 +36,7 @@ class StrategyOptions {
     var noLocalIgnores: Boolean = false
 
     /**
-     * Whether to propagate local strategy rules include into subdirectories
+     * Whether to use local include stategy rules
      */
     @Option(
         names = ["--no-local-include"],
@@ -72,25 +75,25 @@ class StrategyOptions {
     var includeList: List<String> = listOf()
 
     @Option(
-        names = ["--ignore-file"],
+        names = ["--ignore-file", "--ef"],
         description = ["List of ignore rule file paths"]
     )
     var ignoreFiles: List<String> = listOf()
 
     @Option(
-        names = ["--include-file"],
+        names = ["--include-file", "--if"],
         description = ["List of include rule file paths"]
     )
     var includeFiles: List<String> = listOf()
 
     @Option(
-        names = ["--ignore-preset"],
+        names = ["--ignore-preset", "--e"],
         description = ["List of ignore rule presets"]
     )
     var ignorePresets: List<String> = listOf()
 
     @Option(
-        names = ["--include-preset"],
+        names = ["--include-preset", "--i"],
         description = ["List of include rule presets"]
     )
     var includePresets: List<String> = listOf()
@@ -108,7 +111,7 @@ class StrategyOptions {
             !noLocalIncludes,
             !noPropagateIgnore,
             !noPropagateInclude,
-            inclusionPriority
+            inclusionMode
         )
     }
 

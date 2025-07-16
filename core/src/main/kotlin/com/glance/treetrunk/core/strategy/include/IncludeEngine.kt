@@ -15,4 +15,6 @@ class IncludeEngine(private val rules: List<IncludeRule>) {
         return IncludeEngine(combined)
     }
 
+    fun hasRules(): Boolean = rules.isNotEmpty()
+
 }

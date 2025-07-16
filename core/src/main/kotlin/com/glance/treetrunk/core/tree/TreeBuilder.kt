@@ -7,6 +7,7 @@ import com.glance.treetrunk.core.strategy.ignore.IgnoreEngine
 import com.glance.treetrunk.core.strategy.ignore.parser.IgnoreResolver
 import com.glance.treetrunk.core.strategy.ignore.rule.IgnoreRule
 import com.glance.treetrunk.core.strategy.include.IncludeEngine
+import com.glance.treetrunk.core.strategy.include.InclusionMode
 import com.glance.treetrunk.core.strategy.include.parser.IncludeResolver
 import com.glance.treetrunk.core.strategy.include.rule.IncludeRule
 import com.glance.treetrunk.core.tree.model.TreeNode
@@ -38,8 +39,6 @@ object TreeBuilder {
         val ignoreEngine = IgnoreEngine(ignoreRules)
         val includeEngine = IncludeEngine(includeRules)
 
-        // todo inclusion
-
         return buildRecursive(
             rootDir,
             config,
@@ -59,12 +58,17 @@ object TreeBuilder {
         includeEngine: IncludeEngine? = null,
     ): TreeNode? {
         val ignored = (ignoreEngine?.shouldIgnore(file, relativePath) == true)
+        val hasIncludes = includeEngine?.hasRules() == true
         val included = (includeEngine?.shouldInclude(file, relativePath) == true)
 
-        if (config.strategyConfig.inclusionPriority) {
-            if (!included && ignored) return null
-        } else {
-            if (ignored && !included) return null
+        when (config.strategyConfig.inclusionMode) {
+            InclusionMode.OVERRIDE_IGNORE -> {
+                if (ignored && (!hasIncludes || !included)) return null
+            }
+            InclusionMode.FILTER -> {
+                if (hasIncludes && !included) return null
+                if (ignored) return null
+            }
         }
 
         var currentIgnoreEngine = ignoreEngine
