@@ -2,7 +2,7 @@ package com.glance.treetrunk.core.strategy.ignore.parser
 
 import com.glance.treetrunk.core.strategy.StrategyFileParser
 import com.glance.treetrunk.core.strategy.StrategyFileParser.Companion.parseLines
-import com.glance.treetrunk.core.strategy.ignore.IgnoreRule
+import com.glance.treetrunk.core.strategy.ignore.rule.IgnoreRule
 import com.glance.treetrunk.core.strategy.ignore.rule.GlobIgnoreRule
 import java.io.File
 

@@ -4,6 +4,11 @@ import java.io.File
 import java.io.IOException
 import java.util.logging.Logger
 
+val suffixes = mapOf(
+    Strategy.IGNORE to listOf(".treeignore", ".trunkignore"),
+    Strategy.INCLUDE to listOf(".treeinclude", ".trunkinclude")
+)
+
 /**
  * Loads strategy files either from the classpath resources or from a specified path,
  * based on the provided strategy type
@@ -13,13 +18,6 @@ import java.util.logging.Logger
  * - Exist in the provided path for user-supplied strategy files
  */
 object StrategyLoader {
-
-    private val logger = Logger.getLogger(StrategyLoader::class.java.name)
-
-    private val suffixes = mapOf(
-        Strategy.IGNORE to listOf(".treeignore", ".trunkignore"),
-        Strategy.INCLUDE to listOf(".treeinclude", ".trunkinclude")
-    )
 
     /**
      * Loads a strategy file by name for the specified strategy type, searching first from the provided
@@ -32,13 +30,14 @@ object StrategyLoader {
      * @return the file's lines if found, or null if no matching file exists
      */
     @Throws(IOException::class)
-    fun loadStrategyFile(
+    inline fun <reified T : StrategyRule> loadStrategyFile(
         name: String,
         strategy: Strategy,
         fromDirectory: File? = null,
         require: Boolean = false
-    ): List<String>? {
-        val suffixList = suffixes[strategy] ?: return null
+    ): List<T> {
+        val logger = Logger.getLogger(StrategyLoader::class.java.name)
+        val suffixList = suffixes[strategy] ?: return emptyList()
         for (suffix in suffixList) {
             val filename = "$name$suffix"
 
@@ -49,7 +48,7 @@ object StrategyLoader {
                     if (file.isFile) {
                         try {
                             logger.fine("Loading strategy from filesystem: ${file.absolutePath}")
-                            return file.readLines()
+                            return parseFile(file)
                         } catch (e: IOException) {
                             throw IOException("Failed to read strategy file from filesystem: ${file.absolutePath}", e)
                         }
@@ -67,7 +66,11 @@ object StrategyLoader {
             if (stream != null) {
                 try {
                     logger.fine("Loading strategy from resource: $path")
-                    return stream.bufferedReader().readLines()
+                    val tempFile = kotlin.io.path.createTempFile().toFile().apply {
+                        writeBytes(stream.readAllBytes())
+                        deleteOnExit()
+                    }
+                    return parseFile(tempFile, filename)
                 } catch (e: IOException) {
                     throw IOException("Failed to read strategy resource file: $path", e)
                 }
@@ -79,7 +82,14 @@ object StrategyLoader {
             throw IOException("No strategy file found for '$name' with strategy $strategy")
         }
 
-        return null
+        return emptyList()
+    }
+
+    inline fun <reified T : StrategyRule> parseFile(file: File, registeredName: String? = null): List<T> {
+        val targetName = registeredName ?: file.name
+        val parser = StrategyFileParserRegistry.getParserFor<T>(targetName)
+            ?: throw IOException("No parser registered for $targetName strategy ${T::class.simpleName}")
+        return parser.parse(file)
     }
 
 }

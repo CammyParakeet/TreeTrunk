@@ -1,4 +1,4 @@
-package com.glance.treetrunk.core.strategy.include
+package com.glance.treetrunk.core.strategy.include.rule
 
 import com.glance.treetrunk.core.strategy.StrategyRule
 import java.io.File

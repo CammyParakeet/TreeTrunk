@@ -1,10 +1,14 @@
 package com.glance.treetrunk.core.tree
 
+import com.glance.treetrunk.core.config.AdvancedConfig
+import com.glance.treetrunk.core.config.AppConfiguration
 import com.glance.treetrunk.core.strategy.StrategyFileParserRegistry
 import com.glance.treetrunk.core.strategy.ignore.IgnoreEngine
-import com.glance.treetrunk.core.strategy.ignore.IgnoreResolver
-import com.glance.treetrunk.core.strategy.ignore.IgnoreRule
-import com.glance.treetrunk.core.tree.model.RenderOptions
+import com.glance.treetrunk.core.strategy.ignore.parser.IgnoreResolver
+import com.glance.treetrunk.core.strategy.ignore.rule.IgnoreRule
+import com.glance.treetrunk.core.strategy.include.IncludeEngine
+import com.glance.treetrunk.core.strategy.include.parser.IncludeResolver
+import com.glance.treetrunk.core.strategy.include.rule.IncludeRule
 import com.glance.treetrunk.core.tree.model.TreeNode
 import java.io.File
 
@@ -16,55 +20,87 @@ object TreeBuilder {
     /**
      * Builds the tree structure starting from the provided root directory
      *
-     * @param root The root directory to scan
+     * @param config TreeTrunk application config
      * @return A TreeNode representing the root and all its children
      *
      * TODO: Add support for preset, hidden files, symlink handling, and more
      * TODO: defaults from installed properties or cfg? Would need cli update too
      */
     fun buildTree(
-        options: RenderOptions,
-        root: File = options.root,
+        config: AppConfiguration,
         currentDepth: Int = 0,
     ): TreeNode {
-        val rules = IgnoreResolver.resolve(root, options.ignoreOptions)
-        val ignoreEngine = IgnoreEngine(rules)
+        val rootDir = config.root
+
+        val ignoreRules = IgnoreResolver.resolve(rootDir, config.strategyConfig)
+        val includeRules = IncludeResolver.resolve(rootDir, config.strategyConfig)
+
+        val ignoreEngine = IgnoreEngine(ignoreRules)
+        val includeEngine = IncludeEngine(includeRules)
+
+        // todo inclusion
 
         return buildRecursive(
-            root,
-            ignoreEngine,
-            options,
+            rootDir,
+            config,
             currentDepth,
-            ""
-        ) ?: TreeNode(root, emptyList())
+            "",
+            ignoreEngine = ignoreEngine,
+            includeEngine = includeEngine,
+        ) ?: TreeNode(rootDir, emptyList())
     }
 
     private fun buildRecursive(
         file: File,
-        ignoreEngine: IgnoreEngine,
-        options: RenderOptions,
+        config: AppConfiguration,
         currentDepth: Int,
-        relativePath: String
+        relativePath: String,
+        ignoreEngine: IgnoreEngine? = null,
+        includeEngine: IncludeEngine? = null,
     ): TreeNode? {
-        if (ignoreEngine.shouldIgnore(file, relativePath)) return null
+        val ignored = (ignoreEngine?.shouldIgnore(file, relativePath) == true)
+        val included = (includeEngine?.shouldInclude(file, relativePath) == true)
 
-        var currentEngine = ignoreEngine
+        if (config.strategyConfig.inclusionPriority) {
+            if (!included && ignored) return null
+        } else {
+            if (ignored && !included) return null
+        }
 
-        if (file.isDirectory && options.ignoreOptions.useLocalIgnores) {
-            val localIgnoreRules = file.listFiles()?.flatMap { child ->
-                StrategyFileParserRegistry.getParserFor<IgnoreRule>(child.name)?.parse(child) ?: emptyList()
-            }.orEmpty()
+        var currentIgnoreEngine = ignoreEngine
+        var currentIncludeEngine = includeEngine
 
-            if (localIgnoreRules.isNotEmpty()) {
-                currentEngine = if (options.ignoreOptions.propagateLocalIgnores) {
-                    ignoreEngine.addRules(localIgnoreRules)
-                } else {
-                    IgnoreEngine(localIgnoreRules)
+        if (file.isDirectory) {
+            if (config.strategyConfig.useLocalIgnores) {
+                val localIgnoreRules = file.listFiles()?.flatMap { child ->
+                    StrategyFileParserRegistry.getParserFor<IgnoreRule>(child.name)?.parse(child) ?: emptyList()
+                }.orEmpty()
+
+                if (localIgnoreRules.isNotEmpty()) {
+                    currentIgnoreEngine = if (config.strategyConfig.propagateIgnores) {
+                        ignoreEngine?.addRules(localIgnoreRules)
+                    } else {
+                        IgnoreEngine(localIgnoreRules)
+                    }
+                }
+            }
+
+            if (config.strategyConfig.useLocalIncludes) {
+                val localIncludeRules = file.listFiles()?.flatMap { child ->
+                    StrategyFileParserRegistry.getParserFor<IncludeRule>(child.name)?.parse(child) ?: emptyList()
+                }.orEmpty()
+
+                if (localIncludeRules.isNotEmpty()) {
+                    currentIncludeEngine = if (config.strategyConfig.propagateIncludes) {
+                        currentIncludeEngine?.addRules(localIncludeRules)
+                    } else {
+                        IncludeEngine(localIncludeRules)
+                    }
                 }
             }
         }
 
-        val (effectiveFile, effectiveChildren) = if (options.collapseEmpty && file.isDirectory) {
+        val (effectiveFile, effectiveChildren) = if (config.renderConfig.collapseEmpty && file.isDirectory) {
             collapseEmptyDirs(file)
         } else {
             file to (file.listFiles()?.toList() ?: emptyList())
@@ -76,20 +112,21 @@ object TreeBuilder {
         val childNodes = files.mapNotNull { child ->
             buildRecursive(
                 file = child,
-                ignoreEngine = currentEngine,
-                options = options,
+                config = config,
                 currentDepth = currentDepth + 1,
-                relativePath = pathFor(child, relativePath)
+                relativePath = pathFor(child, relativePath),
+                ignoreEngine = currentIgnoreEngine,
+                includeEngine = currentIncludeEngine
             )
         }
         val childrenSize = childNodes.size
 
-        if (options.maxChildren in 1..<childrenSize) {
-            return handleMaxChildren(effectiveFile, childNodes, options)
+        if (config.renderConfig.maxChildren in 1..<childrenSize) {
+            return handleMaxChildren(effectiveFile, childNodes, config)
         }
 
-        if (options.maxDepth in 1..currentDepth) {
-            return handleMaxDepth(effectiveFile, childNodes, options)
+        if (config.renderConfig.maxDepth in 1..currentDepth) {
+            return handleMaxDepth(effectiveFile, childNodes, config.advancedConfig)
         }
 
         return TreeNode(effectiveFile, childNodes)
@@ -127,15 +164,15 @@ object TreeBuilder {
     private fun handleMaxChildren(
         root: File,
         children: List<TreeNode>,
-        options: RenderOptions
+        config: AppConfiguration
     ): TreeNode {
-        val visible = children.take(options.maxChildren)
-        val hidden = children.drop(options.maxChildren)
+        val visible = children.take(config.renderConfig.maxChildren)
+        val hidden = children.drop(config.renderConfig.maxChildren)
 
         val hiddenDirs = hidden.count { it.isDir }
         val hiddenFiles = hidden.size - hiddenDirs
 
-        if (shouldForgive(hidden.size, options.childForgiveness, options.smartExpand)) {
+        if (shouldForgive(hidden.size, config.advancedConfig.childForgiveness, config.advancedConfig.smartExpand)) {
             return TreeNode(root, children)
         }
 
@@ -152,16 +189,16 @@ object TreeBuilder {
     private fun handleMaxDepth(
         root: File,
         children: List<TreeNode>,
-        options: RenderOptions
+        config: AdvancedConfig
     ): TreeNode {
         if (children.isEmpty()) return TreeNode(root)
 
         val dirs = children.count { it.isDir }
         val files = children.size - dirs
         val onlyFiles = dirs == 0
-        val underForgiveness = children.size <= options.depthForgiveness
+        val underForgiveness = children.size <= config.depthForgiveness
 
-        if (onlyFiles || (options.smartExpand && underForgiveness)) {
+        if (onlyFiles || (config.smartExpand && underForgiveness)) {
             return TreeNode(root, children)
         }
 

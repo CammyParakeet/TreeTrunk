@@ -1,4 +1,4 @@
-package com.glance.treetrunk.core.strategy.ignore
+package com.glance.treetrunk.core.strategy.ignore.rule
 
 import com.glance.treetrunk.core.strategy.StrategyRule
 import java.io.File

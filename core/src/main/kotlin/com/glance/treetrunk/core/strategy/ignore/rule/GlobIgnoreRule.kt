@@ -1,7 +1,6 @@
 package com.glance.treetrunk.core.strategy.ignore.rule
 
 import com.glance.treetrunk.core.strategy.DepthMode
-import com.glance.treetrunk.core.strategy.ignore.IgnoreRule
 import com.glance.treetrunk.core.strategy.pattern.GlobPattern
 import com.glance.treetrunk.core.tree.Defaults
 import java.io.File

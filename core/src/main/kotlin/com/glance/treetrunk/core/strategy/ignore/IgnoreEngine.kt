@@ -1,5 +1,6 @@
 package com.glance.treetrunk.core.strategy.ignore
 
+import com.glance.treetrunk.core.strategy.ignore.rule.IgnoreRule
 import java.io.File
 
 /**

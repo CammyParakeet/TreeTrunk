@@ -1,5 +1,6 @@
 package com.glance.treetrunk.cli.commands
 
+import com.glance.treetrunk.cli.commands.render.RenderCommand
 import picocli.CommandLine
 import picocli.CommandLine.Command
 import picocli.CommandLine.Model.CommandSpec

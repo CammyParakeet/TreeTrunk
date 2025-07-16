@@ -2,9 +2,11 @@ package com.glance.treetrunk.core.tree
 
 import com.glance.treetrunk.core.strategy.DepthMode
 import com.glance.treetrunk.core.strategy.StrategyFileParserRegistry
-import com.glance.treetrunk.core.strategy.ignore.IgnoreRule
+import com.glance.treetrunk.core.strategy.ignore.rule.IgnoreRule
 import com.glance.treetrunk.core.strategy.ignore.parser.GitIgnoreParser
 import com.glance.treetrunk.core.strategy.ignore.parser.TreeIgnoreParser
+import com.glance.treetrunk.core.strategy.include.rule.IncludeRule
+import com.glance.treetrunk.core.strategy.include.parser.TreeIncludeParser
 
 /**
  * Global default values used throughout tree rendering
@@ -19,7 +21,7 @@ object Defaults {
     fun registerDefaultStrategies() {
         StrategyFileParserRegistry.registerParser(IgnoreRule::class.java, GitIgnoreParser)
         StrategyFileParserRegistry.registerParser(IgnoreRule::class.java, TreeIgnoreParser)
-        // TODO: includes?
+        StrategyFileParserRegistry.registerParser(IncludeRule::class.java, TreeIncludeParser)
     }
 
 }
