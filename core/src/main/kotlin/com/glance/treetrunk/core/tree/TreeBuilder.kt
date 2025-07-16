@@ -1,9 +1,9 @@
 package com.glance.treetrunk.core.tree
 
+import com.glance.treetrunk.core.strategy.StrategyFileParserRegistry
 import com.glance.treetrunk.core.strategy.ignore.IgnoreEngine
 import com.glance.treetrunk.core.strategy.ignore.IgnoreResolver
-import com.glance.treetrunk.core.strategy.ignore.file.IgnoreFileParser
-import com.glance.treetrunk.core.strategy.ignore.file.IgnoreFileParserRegistry
+import com.glance.treetrunk.core.strategy.ignore.IgnoreRule
 import com.glance.treetrunk.core.tree.model.RenderOptions
 import com.glance.treetrunk.core.tree.model.TreeNode
 import java.io.File
@@ -52,7 +52,7 @@ object TreeBuilder {
 
         if (file.isDirectory && options.ignoreOptions.useLocalIgnores) {
             val localIgnoreRules = file.listFiles()?.flatMap { child ->
-                IgnoreFileParserRegistry.findParserFor(child.name)?.parse(child) ?: emptyList()
+                StrategyFileParserRegistry.getParserFor<IgnoreRule>(child.name)?.parse(child) ?: emptyList()
             }.orEmpty()
 
             if (localIgnoreRules.isNotEmpty()) {

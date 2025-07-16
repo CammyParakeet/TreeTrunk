@@ -1,9 +1,10 @@
 package com.glance.treetrunk.core.tree
 
 import com.glance.treetrunk.core.strategy.DepthMode
-import com.glance.treetrunk.core.strategy.ignore.file.IgnoreFileParserRegistry
-import com.glance.treetrunk.core.strategy.ignore.file.base.GitIgnoreParser
-import com.glance.treetrunk.core.strategy.ignore.file.base.TreeIgnoreParser
+import com.glance.treetrunk.core.strategy.StrategyFileParserRegistry
+import com.glance.treetrunk.core.strategy.ignore.IgnoreRule
+import com.glance.treetrunk.core.strategy.ignore.parser.GitIgnoreParser
+import com.glance.treetrunk.core.strategy.ignore.parser.TreeIgnoreParser
 
 /**
  * Global default values used throughout tree rendering
@@ -15,9 +16,10 @@ object Defaults {
     const val CHILD_FORGIVENESS_THRESHOLD = 4
     val DEPTH_MODE = DepthMode.ANY_DEPTH
 
-    fun registerDefaultIgnoreParsers() {
-        IgnoreFileParserRegistry.register(GitIgnoreParser)
-        IgnoreFileParserRegistry.register(TreeIgnoreParser)
+    fun registerDefaultStrategies() {
+        StrategyFileParserRegistry.registerParser(IgnoreRule::class.java, GitIgnoreParser)
+        StrategyFileParserRegistry.registerParser(IgnoreRule::class.java, TreeIgnoreParser)
+        // TODO: includes?
     }
 
 }

@@ -1,6 +1,6 @@
 package com.glance.treetrunk.core.test.strategy.ignore
 
-import com.glance.treetrunk.core.strategy.ignore.base.GlobPattern
+import com.glance.treetrunk.core.strategy.pattern.GlobPattern
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 

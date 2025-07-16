@@ -1,7 +1,8 @@
-package com.glance.treetrunk.core.strategy.ignore.base
+package com.glance.treetrunk.core.strategy.ignore.rule
 
 import com.glance.treetrunk.core.strategy.DepthMode
 import com.glance.treetrunk.core.strategy.ignore.IgnoreRule
+import com.glance.treetrunk.core.strategy.pattern.GlobPattern
 import com.glance.treetrunk.core.tree.Defaults
 import java.io.File
 
@@ -15,12 +16,12 @@ class GlobIgnoreRule(
 
     private val pattern = GlobPattern(glob, depthMode)
 
-    override fun shouldIgnore(file: File, relativePath: String): Boolean {
+    override fun matches(file: File, relativePath: String): Boolean {
         return pattern.matches(relativePath)
     }
 
     override fun ruleKey(): String {
-        return "Glob:$glob:Depth:$depthMode"
+        return "IgnoreGlob:$glob:Depth:$depthMode"
     }
 
     override fun toString(): String {

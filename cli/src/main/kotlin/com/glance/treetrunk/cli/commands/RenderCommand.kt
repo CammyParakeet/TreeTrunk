@@ -144,6 +144,42 @@ class RenderCommand : Callable<Int> {
     )
     var noLocalIgnorePropagation: Boolean = false
 
+    @Option(
+        names = ["--ignore"],
+        description = ["List of ignore rule patterns for this render"]
+    )
+    var ignoreList: List<String> = listOf()
+
+    @Option(
+        names = ["--include"],
+        description = ["List of include rule patterns for this render"]
+    )
+    var includeList: List<String> = listOf()
+
+    @Option(
+        names = ["--ignore-file"],
+        description = ["List of ignore rule file paths"]
+    )
+    var ignoreFiles: List<String> = listOf()
+
+    @Option(
+        names = ["--include-file"],
+        description = ["List of include rule file paths"]
+    )
+    var includesFiles: List<String> = listOf()
+
+    @Option(
+        names = ["--ignore-preset"],
+        description = ["List of ignore rule presets"]
+    )
+    var ignorePresets: List<String> = listOf()
+
+    @Option(
+        names = ["--include-preset"],
+        description = ["List of include rule presets"]
+    )
+    var includePresets: List<String> = listOf()
+
     /**
      * Executes the command and renders the tree using the specified options
      */

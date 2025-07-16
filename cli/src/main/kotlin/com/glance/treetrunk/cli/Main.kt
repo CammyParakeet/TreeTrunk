@@ -9,7 +9,7 @@ import picocli.CommandLine
  * CLI entrypoint for TreeTrunk
  */
 fun main(args: Array<String>) {
-    Defaults.registerDefaultIgnoreParsers()
+    Defaults.registerDefaultStrategies()
     registerBuiltInStyles()
     CommandLine(TreeTrunkCli()).execute(*args)
 }

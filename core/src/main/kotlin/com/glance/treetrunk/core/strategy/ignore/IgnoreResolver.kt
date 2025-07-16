@@ -1,8 +1,9 @@
 package com.glance.treetrunk.core.strategy.ignore
 
-import com.glance.treetrunk.core.strategy.ignore.base.GlobIgnoreRule
-import com.glance.treetrunk.core.strategy.ignore.file.IgnoreFileParserRegistry
-import com.glance.treetrunk.core.strategy.ignore.file.base.TreeIgnoreParser
+import com.glance.treetrunk.core.strategy.Strategy
+import com.glance.treetrunk.core.strategy.StrategyFileParserRegistry
+import com.glance.treetrunk.core.strategy.StrategyLoader
+import com.glance.treetrunk.core.strategy.ignore.rule.GlobIgnoreRule
 import java.io.File
 
 /**
@@ -19,9 +20,8 @@ object IgnoreResolver {
 
         rules += options.customIgnoreNames.map { GlobIgnoreRule(it) }
 
-        // Check for ignore files in the base dir - TODO: move this to the builder?
         baseDirectory.listFiles()?.forEach { file ->
-            IgnoreFileParserRegistry.findParserFor(file.name)?.let { parser ->
+            StrategyFileParserRegistry.getParserFor<IgnoreRule>(file.name)?.let { parser ->
                 rules += parser.parse(file)
             }
         }
@@ -30,14 +30,10 @@ object IgnoreResolver {
     }
 
     private fun loadDefaults(): List<IgnoreRule> {
-        val resource = javaClass.getResourceAsStream("/defaults.treeignore") ?: return emptyList()
-
-        val tempFile = kotlin.io.path.createTempFile().toFile().apply {
-            writeBytes(resource.readAllBytes())
-            deleteOnExit()
-        }
-
-        return TreeIgnoreParser.parse(tempFile)
+        return StrategyLoader
+            .loadStrategyFile("defaults", Strategy.IGNORE)
+            ?.map { GlobIgnoreRule(it) }
+            ?: emptyList()
     }
 
 }
