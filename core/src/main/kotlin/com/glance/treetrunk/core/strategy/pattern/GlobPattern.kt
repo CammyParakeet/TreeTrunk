@@ -1,4 +1,4 @@
-package com.glance.treetrunk.core.strategy.ignore.base
+package com.glance.treetrunk.core.strategy.pattern
 
 import com.glance.treetrunk.core.strategy.DepthMode
 
