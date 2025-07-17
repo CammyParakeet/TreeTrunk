@@ -1,4 +1,6 @@
-package com.glance.treetrunk.core.tree
+package com.glance.treetrunk.core.tree.render.text
+
+import com.glance.treetrunk.core.tree.CliTreeSymbols
 
 /**
  * Central registry for CLI tree rendering styles

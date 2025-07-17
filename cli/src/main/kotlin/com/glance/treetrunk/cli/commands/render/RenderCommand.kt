@@ -1,8 +1,10 @@
 package com.glance.treetrunk.cli.commands.render
 
 import com.glance.treetrunk.core.config.*
-import com.glance.treetrunk.core.tree.StyleRegistry
+import com.glance.treetrunk.core.tree.render.text.StyleRegistry
 import com.glance.treetrunk.core.tree.TreeBuilder
+import com.glance.treetrunk.core.tree.render.text.TextRenderOpts
+import com.glance.treetrunk.core.tree.render.text.TextTreeRenderer
 import picocli.CommandLine
 import picocli.CommandLine.Parameters
 import java.io.File
@@ -99,9 +101,10 @@ class RenderCommand : Callable<Int> {
             }
         } ?: config.renderConfig.style.symbols
 
+        val textOptions = TextRenderOpts() // todo
         val render = buildString {
             appendLine(root.name + "/")
-            append(TreeBuilder.renderTree(tree, symbols = symbols))
+            append(TextTreeRenderer.render(tree, options = textOptions))
         }
 
         val outputOpt = outputOptions ?: OutputOptions()

@@ -226,44 +226,6 @@ object TreeBuilder {
         return TreeNode(root, children = listOf(TreeNode(File(summary))))
     }
 
-    // TODO move render logic out to decouple
-
-    /**
-     * Renders a tree structure to a formatted text string
-     *
-     * @param node Root TreeNode.
-     * @param prefix Visual indentation passed recursively.
-     * @param isLast Whether this is the last child in the current level.
-     * @param symbols Symbol set used for rendering.
-     * @return Rendered tree as a multiline string.
-     *
-     * TODO: Add options for line numbering, file size display, or annotations, other helpers based on presets
-     */
-    fun renderTree(
-        node: TreeNode,
-        prefix: String = "",
-        isLast: Boolean = true,
-        symbols: CliTreeSymbols = UnicodeSymbols
-    ): String {
-        val name = when {
-            node.file.name.startsWith("...") -> node.file.name // todo anything custom
-            node.isDir -> node.file.name + "/"
-            else -> node.file.name
-        }
-
-        val builder = StringBuilder()
-        builder.append(prefix)
-        builder.append(if (isLast) symbols.lastBranch else symbols.branch)
-        builder.append(name).append("\n")
-
-        val newPrefix = prefix + if (isLast) symbols.indent else symbols.vertical
-        node.children.forEachIndexed { i, childNode ->
-            builder.append(renderTree(childNode, newPrefix, i == node.children.lastIndex, symbols))
-        }
-
-        return builder.toString()
-    }
-
     /**
      * Determines if we should allow rendering past the threshold
      */

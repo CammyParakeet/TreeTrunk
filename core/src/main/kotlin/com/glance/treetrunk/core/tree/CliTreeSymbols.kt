@@ -1,5 +1,7 @@
 package com.glance.treetrunk.core.tree
 
+import com.glance.treetrunk.core.tree.render.text.StyleRegistry
+
 /**
  * Defines the character symbols used to render a tree in CLI output
  *

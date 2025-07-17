@@ -1,7 +1,7 @@
 package com.glance.treetrunk.cli.commands
 
 import com.glance.treetrunk.core.tree.Style
-import com.glance.treetrunk.core.tree.StyleRegistry
+import com.glance.treetrunk.core.tree.render.text.StyleRegistry
 import picocli.CommandLine.Command
 
 /**
